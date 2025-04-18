@@ -1,3 +1,5 @@
+import ProfilePage from "@/components/dashboard/profile-page"
+
 export default function Dashboard() {
-  return <h1>Hi</h1>;
+  return <ProfilePage />
 }
