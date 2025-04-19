@@ -1,36 +1,64 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Trash2, X } from 'lucide-react';
+import { fetchGeneratedBullets, fetchEnhancedBullet } from '@/lib/api';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { User } from '@supabase/auth-helpers-nextjs';
+import { toast } from 'sonner';
+import { Database } from '@/types/supabase';
 
-import {
-  fetchGeneratedBullets,
-  fetchEnhancedBullet,
-} from '@/lib/api';
+type ProjectFromDB = Database['public']['Tables']['projects']['Row'];
 
 type Project = {
+  id?: number;
   name: string;
-  from: string;
-  to: string;
-  summary: string;
-  bullets: string[];
+  link: string;
+  startdate: string;
+  enddate: string;
+  description: string[];
+  profileid?: string;
+  created_at?: string;
   suggestions: string[];
   showSuggestions: boolean;
 };
 
-export default function ProjectSection() {
-  const [projects, setProjects] = useState<Project[]>([
-    { name: '', from: '', to: '', summary: '', bullets: [''], suggestions: [], showSuggestions: true },
-  ]);
+type StringOnlyFields = 'name' | 'link' | 'startdate' | 'enddate';
+
+export default function ProjectSection({ user }: { user: User | null }) {
+  const supabase = createClientComponentClient();
+  const [projects, setProjects] = useState<Project[]>([]);
 
   const [summaryErrors, setSummaryErrors] = useState<Record<number, boolean>>({});
   const [bulletErrors, setBulletErrors] = useState<Record<string, boolean>>({});
 
-  type StringOnlyFields = Exclude<keyof Project, 'bullets' | 'suggestions' | 'showSuggestions'>;
+  useEffect(() => {
+    const fetchProjects = async () => {
+      if (!user) return;
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('profileid', user.id);
+
+      if (error) {
+        toast.error('Failed to load projects');
+      } else {
+        setProjects(
+          data.map((proj) => ({
+            ...proj,
+            suggestions: [],
+            showSuggestions: true,
+          }))
+        );
+      }
+    };
+
+    fetchProjects();
+  }, [user]);
 
   const handleProjectChange = (
     index: number,
@@ -42,30 +70,26 @@ export default function ProjectSection() {
     setProjects(updated);
   };
 
-  const handleBulletChange = (
-    projIndex: number,
-    bulletIndex: number,
-    value: string
-  ) => {
+  const handleBulletChange = (projIndex: number, bulletIndex: number, value: string) => {
     const updated = [...projects];
-    updated[projIndex].bullets[bulletIndex] = value;
+    updated[projIndex].description[bulletIndex] = value;
     setProjects(updated);
 
     const key = `${projIndex}-${bulletIndex}`;
     if (value.trim()) {
-      setBulletErrors(prev => ({ ...prev, [key]: false }));
+      setBulletErrors((prev) => ({ ...prev, [key]: false }));
     }
   };
 
   const addBulletPoint = (projIndex: number) => {
     const updated = [...projects];
-    updated[projIndex].bullets.push('');
+    updated[projIndex].description.push('');
     setProjects(updated);
   };
 
   const deleteBullet = (projIdx: number, bulletIdx: number) => {
     const updated = [...projects];
-    updated[projIdx].bullets.splice(bulletIdx, 1);
+    updated[projIdx].description.splice(bulletIdx, 1);
     setProjects(updated);
   };
 
@@ -74,10 +98,10 @@ export default function ProjectSection() {
       ...projects,
       {
         name: '',
-        from: '',
-        to: '',
-        summary: '',
-        bullets: [''],
+        link: '',
+        startdate: '',
+        enddate: '',
+        description: [''],
         suggestions: [],
         showSuggestions: true,
       },
@@ -90,7 +114,7 @@ export default function ProjectSection() {
   };
 
   const generateBullets = async (projIdx: number) => {
-    const summary = projects[projIdx].summary.trim();
+    const summary = projects[projIdx].name.trim();
     if (!summary) {
       setSummaryErrors((prev) => ({ ...prev, [projIdx]: true }));
       return;
@@ -106,7 +130,7 @@ export default function ProjectSection() {
   };
 
   const enhanceBullet = async (projIdx: number, bulletIdx: number) => {
-    const bullet = projects[projIdx].bullets[bulletIdx].trim();
+    const bullet = projects[projIdx].description[bulletIdx].trim();
     const key = `${projIdx}-${bulletIdx}`;
 
     if (!bullet) {
@@ -118,17 +142,17 @@ export default function ProjectSection() {
 
     const enhanced = (await fetchEnhancedBullet(bullet)).replace(/^"+|"+$/g, '');
     const updated = [...projects];
-    updated[projIdx].bullets[bulletIdx] = enhanced;
+    updated[projIdx].description[bulletIdx] = enhanced;
     setProjects(updated);
   };
 
   const toggleSuggestion = (projIdx: number, suggestion: string) => {
     const updated = [...projects];
     const proj = updated[projIdx];
-    const list = proj.bullets;
+    const list = proj.description;
 
     if (list.includes(suggestion)) {
-      proj.bullets = list.filter((s) => s !== suggestion);
+      proj.description = list.filter((s) => s !== suggestion);
     } else {
       list.push(suggestion);
     }
@@ -140,6 +164,28 @@ export default function ProjectSection() {
     const updated = [...projects];
     updated[projIdx].showSuggestions = false;
     setProjects(updated);
+  };
+
+  const saveProjects = async () => {
+    if (!user) return;
+
+    await supabase.from('projects').delete().eq('profileid', user.id);
+
+    const inserts = projects.map((proj) => ({
+      name: proj.name,
+      link: proj.link,
+      startdate: proj.startdate,
+      enddate: proj.enddate,
+      description: proj.description,
+      profileid: user.id,
+    }));
+
+    const { error } = await supabase.from('projects').insert(inserts);
+    if (error) {
+      toast.error('Failed to save projects');
+    } else {
+      toast.success('Projects saved successfully!');
+    }
   };
 
   return (
@@ -163,63 +209,47 @@ export default function ProjectSection() {
             <Input
               value={proj.name}
               onChange={(e) => handleProjectChange(projIndex, 'name', e.target.value)}
-              placeholder="e.g., Real-Time Collaboration App"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Project Link (optional)</Label>
+            <Input
+              value={proj.link}
+              onChange={(e) => handleProjectChange(projIndex, 'link', e.target.value)}
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>From (MM YYYY)</Label>
+              <Label>Start Date</Label>
               <Input
-                value={proj.from}
-                onChange={(e) => handleProjectChange(projIndex, 'from', e.target.value)}
-                placeholder="e.g., 04 2023"
+                value={proj.startdate}
+                onChange={(e) => handleProjectChange(projIndex, 'startdate', e.target.value)}
               />
             </div>
             <div className="space-y-2">
-              <Label>To (MM YYYY)</Label>
+              <Label>End Date</Label>
               <Input
-                value={proj.to}
-                onChange={(e) => handleProjectChange(projIndex, 'to', e.target.value)}
-                placeholder="e.g., 12 2023"
+                value={proj.enddate}
+                onChange={(e) => handleProjectChange(projIndex, 'enddate', e.target.value)}
               />
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label>Project Summary</Label>
-            <Textarea
-              rows={3}
-              value={proj.summary}
-              onChange={(e) => handleProjectChange(projIndex, 'summary', e.target.value)}
-              placeholder="Describe what this project was about..."
-            />
-            {summaryErrors[projIndex] && (
-              <p className="text-red-500 text-xs mt-1">
-                Project summary is required to generate bullet points.
-              </p>
-            )}
-            <Button
-              variant="secondary"
-              type="button"
-              onClick={() => generateBullets(projIndex)}
-            >
-              ✨ Generate Bullet Points
-            </Button>
-          </div>
+          <Button variant="secondary" onClick={() => generateBullets(projIndex)}>
+            ✨ Generate Bullet Points
+          </Button>
 
           <div className="space-y-2">
             <Label>Bullet Points</Label>
-            {proj.bullets.map((bullet, bulletIndex) => (
+            {proj.description.map((bullet, bulletIndex) => (
               <div key={bulletIndex} className="flex items-start gap-2 w-full">
                 <div className="flex-1">
                   <Textarea
                     className="min-h-[60px] w-full"
                     value={bullet}
-                    onChange={(e) =>
-                      handleBulletChange(projIndex, bulletIndex, e.target.value)
-                    }
-                    placeholder={`Description bullet #${bulletIndex + 1}`}
+                    onChange={(e) => handleBulletChange(projIndex, bulletIndex, e.target.value)}
                   />
                   {bulletErrors[`${projIndex}-${bulletIndex}`] && (
                     <p className="text-red-500 text-xs mt-1">
@@ -227,7 +257,6 @@ export default function ProjectSection() {
                     </p>
                   )}
                 </div>
-
                 <div className="flex flex-col gap-1">
                   <Button
                     size="sm"
@@ -241,20 +270,13 @@ export default function ProjectSection() {
                     variant="ghost"
                     className="text-destructive"
                     onClick={() => deleteBullet(projIndex, bulletIndex)}
-                    aria-label="Delete bullet"
                   >
                     <Trash2 size={14} />
                   </Button>
                 </div>
               </div>
             ))}
-
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => addBulletPoint(projIndex)}
-            >
+            <Button size="sm" variant="outline" onClick={() => addBulletPoint(projIndex)}>
               Add Bullet Point
             </Button>
           </div>
@@ -264,7 +286,6 @@ export default function ProjectSection() {
               <button
                 className="absolute top-1 right-1 text-muted-foreground hover:text-destructive"
                 onClick={() => hideSuggestions(projIndex)}
-                aria-label="Hide suggestions"
               >
                 <X size={14} />
               </button>
@@ -275,7 +296,7 @@ export default function ProjectSection() {
                   <input
                     type="checkbox"
                     className="mt-1"
-                    checked={proj.bullets.includes(s)}
+                    checked={proj.description.includes(s)}
                     onChange={() => toggleSuggestion(projIndex, s)}
                   />
                   <span>{s}</span>
@@ -286,9 +307,14 @@ export default function ProjectSection() {
         </div>
       ))}
 
-      <Button type="button" variant="default" onClick={addProject}>
-        Add Another Project
-      </Button>
+      <div className="flex gap-2">
+        <Button type="button" variant="default" onClick={addProject}>
+          Add Another Project
+        </Button>
+        <Button type="button" variant="secondary" onClick={saveProjects}>
+          Save All Projects
+        </Button>
+      </div>
     </div>
   );
 }
