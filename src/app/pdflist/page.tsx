@@ -1,14 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 type UploadedFile = {
   id: string;
   name: string;
+  parsed: boolean;
+  mutated: boolean;
 };
 
 export default function PDFListPage() {
   const [files, setFiles] = useState<UploadedFile[]>([]);
+  const [parsingId, setParsingId] = useState<string | null>(null);
+  const [mutatingId, setMutatingId] = useState<string | null>(null);
+  const router = useRouter();
 
   const fetchFiles = async () => {
     const res = await fetch("/api/upload-pdf?list=true");
@@ -34,12 +40,42 @@ export default function PDFListPage() {
     }
   };
 
+  const handleParse = async (file: UploadedFile) => {
+    setParsingId(file.id);
+    try {
+      const res = await fetch(`/api/parse-resume?id=${file.id}`);
+      if (!res.ok) {
+        alert("Parsing failed.");
+        return;
+      }
+
+      router.push(`/workflows/parse/${file.id}`);
+    } finally {
+      setParsingId(null);
+    }
+  };
+
+  const handleMutate = async (file: UploadedFile) => {
+    setMutatingId(file.id);
+    try {
+      const res = await fetch(`/api/mutate-resume?id=${file.id}`);
+      if (!res.ok) {
+        alert("Mutation failed.");
+        return;
+      }
+
+      router.push(`/workflows/mutate/${file.id}`);
+    } finally {
+      setMutatingId(null);
+    }
+  };
+
   useEffect(() => {
     fetchFiles();
   }, []);
 
   return (
-    <main className="max-w-2xl mx-auto p-6 space-y-6">
+    <main className="max-w-3xl mx-auto p-6 space-y-6">
       <h1 className="text-2xl font-bold">All Uploaded PDFs</h1>
 
       {files.length === 0 ? (
@@ -49,30 +85,68 @@ export default function PDFListPage() {
           {files.map((file) => (
             <li
               key={file.id}
-              className="bg-gray-100 px-4 py-3 rounded flex flex-wrap justify-between items-center gap-3"
+              className="flex flex-col sm:flex-row sm:items-center sm:justify-between bg-gray-100 p-4 rounded shadow"
             >
-              <div className="text-sm font-medium">{file.name}</div>
-              <div className="flex gap-2">
+              <span className="font-medium mb-2 sm:mb-0">{file.name}</span>
+
+              <div className="flex flex-wrap gap-2">
+                {/* View PDF */}
                 <button
                   onClick={() =>
                     window.open(`/api/upload-pdf?id=${file.id}`, "_blank")
                   }
-                  className="bg-gray-700 text-white px-4 py-1.5 rounded hover:bg-gray-800 text-sm"
+                  className="bg-gray-700 text-white px-3 py-1 rounded hover:bg-gray-800"
                 >
-                  View
+                  View PDF
                 </button>
+
+                {/* Parse / View Parsed */}
                 <button
                   onClick={() =>
-                    (window.location.href = `/workflows/parse/${file.id}`)
+                    file.parsed
+                      ? router.push(`/workflows/parse/${file.id}`)
+                      : handleParse(file)
                   }
-                  className="bg-purple-600 text-white px-4 py-1.5 rounded hover:bg-purple-700 text-sm"
+                  disabled={parsingId === file.id}
+                  className={`px-3 py-1 rounded text-white ${
+                    parsingId === file.id
+                      ? "bg-yellow-500 cursor-not-allowed"
+                      : "bg-blue-600 hover:bg-blue-700"
+                  }`}
                 >
-                  Parse
+                  {parsingId === file.id
+                    ? "Parsing..."
+                    : file.parsed
+                      ? "View Parsed"
+                      : "Parse"}
                 </button>
+
+                {/* Mutate / View Mutated */}
+                <button
+                  onClick={() =>
+                    file.mutated
+                      ? router.push(`/workflows/mutate/${file.id}`)
+                      : handleMutate(file)
+                  }
+                  disabled={mutatingId === file.id}
+                  className={`px-3 py-1 rounded text-white ${
+                    mutatingId === file.id
+                      ? "bg-yellow-600 cursor-not-allowed"
+                      : "bg-green-600 hover:bg-green-700"
+                  }`}
+                >
+                  {mutatingId === file.id
+                    ? "Mutating..."
+                    : file.mutated
+                      ? "View Mutated"
+                      : "Mutate"}
+                </button>
+
+                {/* Delete */}
                 <button
                   onClick={() => handleDelete(file)}
-                  className="text-red-600 hover:text-red-800 text-xl font-bold px-2"
-                  title="Delete"
+                  className="text-red-600 hover:text-red-800 text-xl font-bold ml-2"
+                  title="Delete PDF"
                 >
                   ×
                 </button>
