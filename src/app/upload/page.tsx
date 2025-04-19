@@ -36,8 +36,21 @@ export default function UploadPage() {
     });
 
     if (res.ok) {
-      if (importMethod === "PDF File") {
-        router.push("/workflows/pdf");
+      switch (importMethod) {
+        case "PDF File":
+          router.push("/workflows/pdf");
+          break;
+        case "LinkedIn Profile":
+          router.push("/workflows/linkedin");
+          break;
+        case "Direct Text Input":
+          router.push("/workflows/text");
+          break;
+        case "Google Doc":
+          router.push("/workflows/google");
+          break;
+        default:
+          alert("Unsupported import method.");
       }
       // Add other routes later for "Direct Text", "LinkedIn", etc.
     } else {
