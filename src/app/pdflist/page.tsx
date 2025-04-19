@@ -142,6 +142,16 @@ export default function PDFListPage() {
                       : "Mutate"}
                 </button>
 
+                {/* ✨ Template Builder */}
+                {file.mutated && (
+                  <button
+                    onClick={() => router.push(`/resume_template/${file.id}`)}
+                    className="bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700"
+                  >
+                    Build Resume
+                  </button>
+                )}
+
                 {/* Delete */}
                 <button
                   onClick={() => handleDelete(file)}
