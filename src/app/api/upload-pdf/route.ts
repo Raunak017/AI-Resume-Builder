@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
 
     console.log(
       "📄 PDF stored in memory:",
-      file.name,
+      fileName,
       buffer.byteLength,
       "bytes"
     );
