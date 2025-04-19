@@ -107,21 +107,35 @@ const ResumeDocument = ({ data }) => (
 
 
       {/* Education Section */}
-      {data.education.some((edu) => edu.institution || edu.degree) && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Education</Text>
-          {data.education.map((edu, index) =>
-            edu.institution || edu.degree ? (
-              <View key={index} style={{ marginBottom: 8 }}>
-                <Text style={styles.entryTitle}>{edu.institution}</Text>
-                <Text style={styles.entrySubtitle}>{edu.degree}</Text>
-                {edu.year && <Text style={styles.entryDate}>{edu.year}</Text>}
-                {edu.description && <Text style={styles.entryDescription}>{edu.description}</Text>}
-              </View>
-            ) : null,
-          )}
-        </View>
-      )}
+      {data.education.some((edu) => edu.school || edu.degree) && (
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Education</Text>
+        {data.education.map((edu, index) =>
+          edu.school || edu.degree ? (
+            <View key={index} style={{ marginBottom: 8 }}>
+              <Text style={styles.entryTitle}>{edu.school}</Text>
+              <Text style={styles.entrySubtitle}>
+                {edu.degree}
+                {edu.major && ` in ${edu.major}`}
+              </Text>
+              {edu.minor && <Text style={styles.entrySubtitle}>Minor: {edu.minor}</Text>}
+              {(edu.startDate || edu.endDate) && (
+                <Text style={styles.entryDate}>
+                  {edu.startDate} - {edu.endDate}
+                </Text>
+              )}
+              {edu.gpa && <Text style={styles.entryDescription}>GPA: {edu.gpa}</Text>}
+              {edu.coursework?.length > 0 && (
+                <Text style={styles.entryDescription}>
+                  Relevant Coursework: {edu.coursework.join(", ")}
+                </Text>
+              )}
+            </View>
+          ) : null
+        )}
+      </View>
+    )}
+
 
       {/* Experience Section */}
       {data.experience.some((exp) => exp.company || exp.position) && (

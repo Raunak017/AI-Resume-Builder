@@ -32,7 +32,7 @@ export interface Database {
         Relationships: [];
       };
 
-      education: {
+      educations: {
         Row: {
           id: number;
           school: string;
@@ -42,44 +42,18 @@ export interface Database {
           gpa: string;
           startDate: string;
           endDate: string;
-          coursework: string;
+          coursework: string[];
           profileid: string;
           created_at: string;
         };
-        Insert: Omit<Database['public']['Tables']['education']['Row'], 'id' | 'created_at'> & {
+        Insert: Omit<Database['public']['Tables']['educations']['Row'], 'id' | 'created_at'> & {
           id?: number;
           created_at?: string;
         };
-        Update: Partial<Database['public']['Tables']['education']['Row']>;
+        Update: Partial<Database['public']['Tables']['educations']['Row']>;
         Relationships: [
           {
             foreignKeyName: 'education_profileid_fkey';
-            columns: ['profileid'];
-            referencedRelation: 'profiles';
-            referencedColumns: ['id'];
-          }
-        ];
-      };
-
-      projects: {
-        Row: {
-          id: number;
-          name: string;
-          from: string;
-          to: string;
-          summary: string;
-          bullets: string[];
-          profileid: string;
-          created_at: string;
-        };
-        Insert: Omit<Database['public']['Tables']['projects']['Row'], 'id' | 'created_at'> & {
-          id?: number;
-          created_at?: string;
-        };
-        Update: Partial<Database['public']['Tables']['projects']['Row']>;
-        Relationships: [
-          {
-            foreignKeyName: 'projects_profileid_fkey';
             columns: ['profileid'];
             referencedRelation: 'profiles';
             referencedColumns: ['id'];
@@ -118,8 +92,33 @@ export interface Database {
           }
         ];
       };
-    };
 
+      projects: {
+        Row: {
+          id: number;
+          name: string;
+          from: string;
+          to: string;
+          summary: string;
+          bullets: string[];
+          profileid: string;
+          created_at: string;
+        };
+        Insert: Omit<Database['public']['Tables']['projects']['Row'], 'id' | 'created_at'> & {
+          id?: number;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['projects']['Row']>;
+        Relationships: [
+          {
+            foreignKeyName: 'projects_profileid_fkey';
+            columns: ['profileid'];
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          }
+        ];
+      };
+    };
     Views: {};
     Functions: {};
     Enums: {};

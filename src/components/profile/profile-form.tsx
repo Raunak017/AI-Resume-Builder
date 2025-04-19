@@ -11,6 +11,7 @@ import WorkExSection from "@/components/profile/work_ex"
 import ProjectSection from "@/components/profile/projects"
 import EducationSection from "@/components/profile/education"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default function ProfileForm({ user }: { user: User | null }) {
   const router = useRouter()
@@ -39,9 +40,9 @@ export default function ProfileForm({ user }: { user: User | null }) {
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full">
       <div className="lg:col-span-2 flex flex-col gap-3">
         <PersonalSection user={user} />
-        <EducationSection />
+        <EducationSection user={user}/>
         <WorkExSection user={user} />
-        <ProjectSection />
+        <ProjectSection user={user}/>
         <Button onClick={handleNavigate} className="mt-4 self-start">
           Go to Final Resume
         </Button>

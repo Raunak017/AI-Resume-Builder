@@ -96,7 +96,14 @@ export default function ResumeForm({ user }: { user: User | null }) {
           .single()
   
         if (profileError) throw new Error("Could not fetch profile")
-  
+
+        const { data: educationData, error: educationError } = await supabase
+          .from("educations")
+          .select("*")
+          .eq("profileid", user.id)
+          .single()
+
+        
         // --- Fetch Experience ---
         const { data: experiences, error: expError } = await supabase
           .from("experiences")
@@ -195,36 +202,41 @@ export default function ResumeForm({ user }: { user: User | null }) {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div>
-          <Card className="sticky top-4">
-            <CardHeader>
-              <CardTitle>Resume Preview</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {previewUrl ? (
-                <iframe src={previewUrl} className="w-full aspect-[1/1.414] border rounded-md" />
-              ) : (
-                <div className="w-full aspect-[1/1.414] flex items-center justify-center bg-gray-50 border rounded-md text-center text-muted-foreground p-4">
-                  <Eye className="h-8 w-8 mb-2" />
-                  <p>Click "Preview" to see your resume</p>
-                </div>
-              )}
-            </CardContent>
-            <CardFooter className="flex flex-col space-y-2">
-              <Button onClick={handlePreview} variant="outline" disabled={loading}>
-                <Eye className="h-4 w-4 mr-2" />
-                {loading ? "Generating..." : "Preview"}
-              </Button>
-              <Button onClick={handleDownload} disabled={loading}>
-                <Download className="h-4 w-4 mr-2" />
-                {loading ? "Generating..." : "Download PDF"}
-              </Button>
-            </CardFooter>
-          </Card>
-        </div>
+    <div className="flex justify-center w-full px-4 py-8">
+      <div className="w-full max-w-4xl">
+        <Card className="mx-auto w-full max-w-2xl sticky top-4">
+          <CardHeader>
+            <CardTitle>Resume Preview</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {previewUrl ? (
+              <iframe
+                src={previewUrl}
+                className="w-full aspect-[1/1.414] border rounded-md"
+              />
+            ) : (
+              <div className="w-full aspect-[1/1.414] flex flex-col items-center justify-center bg-gray-50 border rounded-md text-center text-muted-foreground p-4">
+                <Eye className="h-8 w-8 mb-2" />
+                <p>Click "Preview" to see your resume</p>
+              </div>
+            )}
+          </CardContent>
+          <CardFooter className="flex flex-col space-y-2">
+            <Button
+              onClick={handlePreview}
+              variant="outline"
+              disabled={loading}
+            >
+              <Eye className="h-4 w-4 mr-2" />
+              {loading ? "Generating..." : "Preview"}
+            </Button>
+            <Button onClick={handleDownload} disabled={loading}>
+              <Download className="h-4 w-4 mr-2" />
+              {loading ? "Generating..." : "Download PDF"}
+            </Button>
+          </CardFooter>
+        </Card>
       </div>
     </div>
-  )
-}
+  );
+}  
