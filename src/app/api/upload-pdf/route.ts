@@ -8,6 +8,7 @@ type FileData = {
 };
 
 const uploadedFiles = new Map<string, FileData>();
+export const uploadedFilesList = uploadedFiles;
 
 export async function POST(req: NextRequest) {
   try {
