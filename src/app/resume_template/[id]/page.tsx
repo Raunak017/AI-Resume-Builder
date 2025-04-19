@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 
 type ResumeVersion = Record<string, any>;
@@ -11,6 +11,7 @@ export default function ResumeTemplatePage() {
   const [mutations, setMutations] = useState<ResumeVersion[]>([]);
   const [selected, setSelected] = useState<number | null>(null);
   const [error, setError] = useState("");
+  const previewRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchMutations = async () => {
@@ -36,11 +37,49 @@ export default function ResumeTemplatePage() {
     if (id) fetchMutations();
   }, [id]);
 
+  const handleDownload = async () => {
+    if (!previewRef.current || selected === null) return;
+
+    try {
+      const html2pdf = (await import("html2pdf.js")).default;
+
+      const opt = {
+        margin: 0.3,
+        filename: `resume_${id}_v${selected + 1}.pdf`,
+        image: { type: "jpeg", quality: 1 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
+      };
+
+      await html2pdf().set(opt).from(previewRef.current).save();
+    } catch (err) {
+      console.error("❌ PDF generation failed, fallback to print:", err);
+      alert("PDF generation failed. Opening print dialog...");
+
+      const printWindow = window.open("", "_blank");
+      if (printWindow) {
+        printWindow.document.write("<html><head><title>Resume</title>");
+        printWindow.document.write(`<style>
+          body { font-family: sans-serif; padding: 2rem; }
+          h1, h2 { margin: 0.5rem 0; }
+          ul, li { margin: 0; padding: 0; }
+          .inline-skills li { display: inline-block; margin-right: 8px; background: #eee; padding: 2px 6px; border-radius: 4px; }
+        </style>`);
+        printWindow.document.write("</head><body>");
+        printWindow.document.write(previewRef.current.innerHTML);
+        printWindow.document.write("</body></html>");
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+      }
+    }
+  };
+
   const renderHTMLPreview = (resume: ResumeVersion) => {
     const { name, contact, skills, experience, education, projects } = resume;
 
     return (
-      <div className="bg-white shadow p-6 rounded border border-gray-300 space-y-4">
+      <div className="bg-white shadow p-6 rounded border border-gray-300 space-y-4 text-black">
         <h1 className="text-2xl font-bold">{name}</h1>
         <p className="text-gray-700">
           📧 {contact?.email} | 📞 {contact?.phone} <br />
@@ -49,7 +88,7 @@ export default function ResumeTemplatePage() {
 
         <section>
           <h2 className="text-xl font-semibold mt-4 mb-1">Skills</h2>
-          <ul className="flex flex-wrap gap-2 text-sm">
+          <ul className="inline-skills flex flex-wrap gap-2 text-sm">
             {skills?.map((skill: string, i: number) => (
               <li key={i} className="bg-gray-200 px-2 py-1 rounded">
                 {skill}
@@ -61,7 +100,7 @@ export default function ResumeTemplatePage() {
         <section>
           <h2 className="text-xl font-semibold mt-4 mb-1">Experience</h2>
           {experience?.map((exp: any, i: number) => (
-            <div key={i}>
+            <div key={i} className="mb-2">
               <p className="font-medium">
                 {exp.role} @ {exp.company}
               </p>
@@ -97,7 +136,7 @@ export default function ResumeTemplatePage() {
   };
 
   return (
-    <main className="max-w-4xl mx-auto p-6 space-y-6">
+    <main className="max-w-4xl mx-auto p-6 space-y-6 text-black">
       <h1 className="text-2xl font-bold">Build Your Resume</h1>
 
       {loading && <p className="text-gray-500">Loading mutated versions...</p>}
@@ -124,8 +163,16 @@ export default function ResumeTemplatePage() {
           {selected !== null && (
             <div className="mt-6">
               <h2 className="text-xl font-semibold mb-2">Preview</h2>
-              {renderHTMLPreview(mutations[selected])}
-              {/* 🚧 Save & Download logic comes next */}
+              <div ref={previewRef}>
+                {renderHTMLPreview(mutations[selected])}
+              </div>
+
+              <button
+                onClick={handleDownload}
+                className="mt-4 bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-800"
+              >
+                📥 Download as PDF
+              </button>
             </div>
           )}
         </>
