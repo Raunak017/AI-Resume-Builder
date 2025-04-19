@@ -5,8 +5,13 @@ type FileData = {
   buffer: Buffer;
   name: string;
   mime: string;
-  parsedData?: any; // ⬅️ parsed JSON resume
-  mutatedData?: any[]; // ⬅️ array of AI-mutated versions
+  parsedData?: any;
+  mutatedData?: any[];
+  templates?: {
+    versionIndex: number;
+    html: string;
+    createdAt: string;
+  }[];
 };
 
 const uploadedFiles = new Map<string, FileData>();
