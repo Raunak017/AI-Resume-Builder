@@ -9,8 +9,8 @@ import { User } from "@supabase/auth-helpers-nextjs"
 import PersonalSection from "@/components/profile/personal"
 import WorkExSection from "@/components/profile/work_ex"
 import ProjectSection from "@/components/profile/projects"
+import EducationSection from "@/components/profile/education"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default function ProfileForm({ user }: { user: User | null }) {
   const router = useRouter()
@@ -39,6 +39,7 @@ export default function ProfileForm({ user }: { user: User | null }) {
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full">
       <div className="lg:col-span-2 flex flex-col gap-3">
         <PersonalSection user={user} />
+        <EducationSection />
         <WorkExSection user={user} />
         <ProjectSection />
         <Button onClick={handleNavigate} className="mt-4 self-start">
