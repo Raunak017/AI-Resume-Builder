@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -16,11 +16,14 @@ import {
 } from "@supabase/auth-helpers-nextjs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
 import { toast, Toaster } from "sonner";
 
 export default function PersonalSection({ user }: { user: User | null }) {
   const supabase = createClientComponentClient();
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   const [formData, setFormData] = useState({
     full_name: "",
     phone: "",
@@ -42,7 +45,7 @@ export default function PersonalSection({ user }: { user: User | null }) {
     if (!user) return;
 
     const { error } = await supabase
-      .from("profiles") // change this to your actual table name
+      .from("profiles")
       .update({
         full_name: formData.full_name,
         phone: formData.phone,
@@ -51,7 +54,7 @@ export default function PersonalSection({ user }: { user: User | null }) {
         github: formData.github,
         portfolio: formData.portfolio,
       })
-      .eq("id", user.id); // assumes 'id' is the primary key / FK to auth.users
+      .eq("id", user.id);
 
     if (error) {
       toast("Update failed", { description: error.message });
@@ -72,7 +75,7 @@ export default function PersonalSection({ user }: { user: User | null }) {
 
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="full-name">Full Name</Label>
+          <Label htmlFor="full_name">Full Name</Label>
           <Input
             id="full_name"
             placeholder="Enter your full name"
@@ -93,13 +96,15 @@ export default function PersonalSection({ user }: { user: User | null }) {
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={user?.email || ""}
-              placeholder="Enter your email"
-              disabled
-            />
+            {mounted && (
+              <Input
+                id="email"
+                type="email"
+                value={user?.email || ""}
+                placeholder="Enter your email"
+                disabled
+              />
+            )}
           </div>
         </div>
 
@@ -118,13 +123,13 @@ export default function PersonalSection({ user }: { user: User | null }) {
           <div className="flex flex-col gap-1">
             <Input
               id="linkedin"
-              placeholder="Linkedin URL"
+              placeholder="LinkedIn URL"
               value={formData.linkedin}
               onChange={onChangeHandler}
             />
             <Input
               id="github"
-              placeholder="Github URL"
+              placeholder="GitHub URL"
               value={formData.github}
               onChange={onChangeHandler}
             />
