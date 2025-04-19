@@ -11,14 +11,15 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import PersonalSection from "@/components/profile/personal"
-import ProjectSection from "./projects"
+import WorkExSection   from "@/components/profile/work_ex"
+import ProjectSection  from "@/components/profile/projects"
+
 export default function ProfileForm() {
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
-      
       <PersonalSection />
+      <WorkExSection />      {/* Work‑experience card */}
       <ProjectSection />
-      
     </div>
   )
 }
