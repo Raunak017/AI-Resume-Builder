@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 
-let uploadedPDF: Buffer | null = null;
-let fileName = "";
+type FileData = {
+  buffer: Buffer;
+  name: string;
+  mime: string;
+};
+
+const uploadedFiles = new Map<string, FileData>();
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,17 +19,19 @@ export async function POST(req: NextRequest) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    uploadedPDF = buffer;
-    fileName = file.name;
+    const id = randomUUID();
+
+    uploadedFiles.set(id, {
+      buffer,
+      name: file.name,
+      mime: file.type || "application/pdf",
+    });
 
     console.log(
-      "📄 PDF stored in memory:",
-      fileName,
-      buffer.byteLength,
-      "bytes"
+      `📄 Uploaded: ${file.name} (${buffer.byteLength} bytes) [id=${id}]`
     );
 
-    return NextResponse.json({ success: true, fileName });
+    return NextResponse.json({ success: true, id, fileName: file.name });
   } catch (error) {
     console.error("❌ Error uploading PDF:", error);
     return NextResponse.json(
@@ -33,16 +41,46 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function GET() {
-  if (!uploadedPDF) {
-    return NextResponse.json({ error: "No file stored yet" }, { status: 404 });
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get("id");
+  const list = searchParams.get("list");
+
+  // 🆕 Return list of uploaded files
+  if (list === "true") {
+    const allFiles = Array.from(uploadedFiles.entries()).map(([id, file]) => ({
+      id,
+      name: file.name,
+    }));
+    return NextResponse.json(allFiles);
   }
 
-  return new NextResponse(uploadedPDF, {
+  // ✅ Return single file by ID
+  if (!id || !uploadedFiles.has(id)) {
+    return NextResponse.json({ error: "File not found" }, { status: 404 });
+  }
+
+  const file = uploadedFiles.get(id)!;
+
+  return new NextResponse(file.buffer, {
     status: 200,
     headers: {
-      "Content-Type": "application/pdf",
-      "Content-Disposition": `inline; filename="${fileName}"`,
+      "Content-Type": file.mime,
+      "Content-Disposition": `inline; filename="${file.name}"`,
     },
   });
+}
+
+export async function DELETE(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get("id");
+
+  if (!id || !uploadedFiles.has(id)) {
+    return NextResponse.json({ error: "File not found" }, { status: 404 });
+  }
+
+  uploadedFiles.delete(id);
+  console.log(`🗑️ Deleted file with id: ${id}`);
+
+  return NextResponse.json({ success: true });
 }
