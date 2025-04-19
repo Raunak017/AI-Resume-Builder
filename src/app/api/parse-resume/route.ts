@@ -13,28 +13,24 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
 
-  console.log("🛬 API Hit: /api/parse-resume");
-  console.log("🔎 Looking for file ID:", id);
-  console.log("📁 Available IDs:", [...uploadedFilesList.keys()]);
-
   if (!id || !uploadedFilesList.has(id)) {
-    console.warn("❌ File not found in memory:", id);
     return NextResponse.json({ error: "File not found" }, { status: 404 });
   }
 
+  const file = uploadedFilesList.get(id);
+
+  if (!file || !file.buffer) {
+    console.error("❌ File buffer missing for ID:", id);
+    return NextResponse.json({ error: "File data missing" }, { status: 400 });
+  }
+
+  if (file.parsedData) {
+    console.log("✅ Returning cached parsed resume for ID:", id);
+    return NextResponse.json(file.parsedData);
+  }
+
   try {
-    const file = uploadedFilesList.get(id);
-    if (!file || !file.buffer) {
-      console.error("❌ File buffer missing for ID:", id);
-      return NextResponse.json({ error: "File data missing" }, { status: 400 });
-    }
-
-    console.log(
-      `📄 Found file: ${file.name} | Buffer Size: ${file.buffer.length}`
-    );
-
     const rawText = await safePdfParse(file.buffer);
-    // console.log("📜 Extracted text from PDF:", rawText.slice(0, 300), "...");
 
     const prompt = `
 You're a resume parser. Based on the PDF text below, extract the resume info into a structured JSON format like:
@@ -63,7 +59,6 @@ ${rawText}
     });
 
     const rawContent = completion.choices[0].message?.content?.trim() || "{}";
-    console.log("🤖 GPT Response:\n", rawContent);
 
     const cleaned = rawContent
       .replace(/^```(?:json)?/, "")
@@ -81,7 +76,7 @@ ${rawText}
       );
     }
 
-    console.log("✅ Parsed Resume JSON:", parsed);
+    file.parsedData = parsed;
     return NextResponse.json(parsed);
   } catch (err) {
     console.error("❌ Unexpected error in /api/parse-resume:", err);

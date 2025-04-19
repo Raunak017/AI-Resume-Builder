@@ -5,6 +5,8 @@ type FileData = {
   buffer: Buffer;
   name: string;
   mime: string;
+  parsedData?: any; // ⬅️ parsed JSON resume
+  mutatedData?: any[]; // ⬅️ array of AI-mutated versions
 };
 
 const uploadedFiles = new Map<string, FileData>();
@@ -52,6 +54,8 @@ export async function GET(req: NextRequest) {
     const allFiles = Array.from(uploadedFiles.entries()).map(([id, file]) => ({
       id,
       name: file.name,
+      parsed: !!file.parsedData,
+      mutated: !!file.mutatedData?.length,
     }));
     return NextResponse.json(allFiles);
   }
