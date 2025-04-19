@@ -7,7 +7,7 @@ export default function ProfileForm({ user }: { user: User | null }) {
   return (
     <div className="w-full md:w-8/10 flex flex-col gap-3">
       <PersonalSection user={user} />
-      <WorkExSection />
+      <WorkExSection user={user} />
       <ProjectSection />
     </div>
   );
