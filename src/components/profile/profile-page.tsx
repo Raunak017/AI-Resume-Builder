@@ -13,7 +13,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
-import ProfileForm from "@/components/dashboard/profile-form"
+import ProfileForm from "@/components/profile/profile-form"
 
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState("profile")
