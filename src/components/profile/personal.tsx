@@ -10,35 +10,6 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-
-// export default function PersonalSection() {
-//   const [personals, setDetails] = useState<string[]>([""])
-
-//   const handleChange = (value: string, index: number) => {
-//     const updated = [...personals]
-//     updated[index] = value
-//     setDetails(updated)
-//   }
-
-//   const addDeet = () => setDetails([...personals, ""])
-
-//   return (
-//     <div className="space-y-2">
-//       <Label>Skills</Label>
-//       {personals.map((detail, index) => (
-//         <Input
-//           key={index}
-//           value={detail}
-//           onChange={(e) => handleChange(e.target.value, index)}
-//           placeholder={`Information #${index + 1}`}
-//         />
-//       ))}
-//       <Button variant="outline" onClick={addDeet} className="mt-2">Add Information</Button>
-
-//     </div>
-//   )
-// }
 
 export default function PersonalSection() {
     const [profileLinks, setProfileLinks] = useState([{ platform: "", url: "" }])
@@ -63,12 +34,8 @@ export default function PersonalSection() {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="first-name">First Name</Label>
-              <Input id="first-name" placeholder="Enter your first name" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="last-name">Last Name</Label>
-              <Input id="last-name" placeholder="Enter your last name" />
+              <Label htmlFor="first-name">Name</Label>
+              <Input id="name" placeholder="Enter your name" />
             </div>
           </div>
   
