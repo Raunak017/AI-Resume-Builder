@@ -1,4 +1,3 @@
-console.log('[ai.ts] exports:', Object.keys(exports));
 import OpenAI from 'openai';
 
 const openai = new OpenAI({
