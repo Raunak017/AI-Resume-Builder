@@ -520,7 +520,7 @@ export default function WorkExSection({ user }: { user: User | null }) {
       </CardFooter>
       <AlertDialog
         open={alertState.active}
-        onOpenChange={(open) =>
+        onOpenChange={(open: boolean) =>
           setAlertState((prev) => ({ ...prev, active: open }))
         }
       >
