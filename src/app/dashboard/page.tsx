@@ -1,44 +1,30 @@
-// import ProfilePage from "@/components/profile/profile-page"
+"use client";
 
-// export default function Dashboard() {
-//   return <ProfilePage />
-// }
-import { createClient } from '@supabase/supabase-js'
-import ResumeForm from "@/components/resume-form"
-import { Toaster } from "@/components/ui/sonner"
+import ProfilePage from "@/components/profile/profile-page";
+import {
+  createClientComponentClient,
+  User,
+} from "@supabase/auth-helpers-nextjs";
+import { useState, useEffect } from "react";
+import { redirect } from "next/navigation";
 
+export default function Dashboard() {
+  const [user, setUser] = useState<User | null>(null);
+  const supabase = createClientComponentClient();
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string // <-- get from your friend
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string // <-- get this too
+  useEffect(() => {
+    const getUser = async () => {
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
+      if (user) setUser(user);
+      else {
+        redirect("/login");
+      }
+    };
 
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error("Supabase environment variables are not set");
-}
-
-export const supabase = createClient(supabaseUrl, supabaseKey)
-
-export default function Home() {
-  // const { data, error } = await supabase.from('profiles').select('*').limit(1)
-  // const { data, error } = await supabase.from("profiles").upsert([
-  //   {
-  //     id: "98b1392c-0afc-45ba-97bf-59e5312a36b0", // Optional: if you want to update this row
-  //     email: "newuser@example.com",
-  //     full_name: "John Doe",
-  //     phone: "123-456-7890",
-  //     location: "New York",
-  //     linkedin: "https://linkedin.com/in/johndoe",
-  //     github: "https://github.com/johndoe",
-  //     skills: "JavaScript, React, Node.js",
-  //     portfolio: "https://johndoe.dev",
-  //   },
-  // ])
-
-  return (
-
-    <main className="container mx-auto py-10 px-4">
-      <h1 className="text-3xl font-bold text-center mb-8">Resume Builder</h1>
-      <ResumeForm />
-      <Toaster richColors position="top-right" />
-    </main>
-  )
+    getUser();
+  }, [supabase]);
+  return <ProfilePage user={user} />;
 }

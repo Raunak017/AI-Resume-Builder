@@ -1,21 +1,14 @@
-import EducationSection from "@/components/profile/education"
-// import CustomSection from "@/components/profile/custom"
-import PersonalSection from "@/components/profile/personal"
-import ProjectSection from "@/components/profile/projects"
-import WorkExSection   from "@/components/profile/work_ex"
+import PersonalSection from "@/components/profile/personal";
+import WorkExSection from "@/components/profile/work_ex";
+import ProjectSection from "@/components/profile/projects";
+import { User } from "@supabase/auth-helpers-nextjs";
 
-export default function ProfileForm() {
-  
+export default function ProfileForm({ user }: { user: User | null }) {
   return (
-    <div className="space-y-6 max-w-3xl mx-auto">
-      <PersonalSection />
-      <EducationSection />
-      {/* <ExperienceSection /> */}
-      {/* <ProjectsSection /> */}
-      {/* <CustomSection /> */}
-      {/* <SkillsSection /> */}
-      <WorkExSection />      {/* Work‑experience card */}
+    <div className="w-full md:w-8/10 flex flex-col gap-3">
+      <PersonalSection user={user} />
+      <WorkExSection />
       <ProjectSection />
     </div>
-  )
+  );
 }

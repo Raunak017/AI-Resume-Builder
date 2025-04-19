@@ -1,5 +1,7 @@
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
+"use client";
+
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -7,90 +9,138 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+} from "@/components/ui/card";
+import {
+  User,
+  createClientComponentClient,
+} from "@supabase/auth-helpers-nextjs";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
-export default function PersonalSection() {
-    const [profileLinks, setProfileLinks] = useState([{ platform: "", url: "" }])
-  
-    const handleProfileChange = (index: number, key: "platform" | "url", value: string) => {
-      const updated = [...profileLinks]
-      updated[index][key] = value
-      setProfileLinks(updated)
+import { toast, Toaster } from "sonner";
+
+export default function PersonalSection({ user }: { user: User | null }) {
+  const supabase = createClientComponentClient();
+  const [formData, setFormData] = useState({
+    full_name: "",
+    phone: "",
+    location: "",
+    linkedin: "",
+    github: "",
+    portfolio: "",
+  });
+
+  const onChangeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [id]: value,
+    }));
+  };
+
+  const saveChangesHandler = async () => {
+    if (!user) return;
+
+    const { error } = await supabase
+      .from("profiles") // change this to your actual table name
+      .update({
+        full_name: formData.full_name,
+        phone: formData.phone,
+        location: formData.location,
+        linkedin: formData.linkedin,
+        github: formData.github,
+        portfolio: formData.portfolio,
+      })
+      .eq("id", user.id); // assumes 'id' is the primary key / FK to auth.users
+
+    if (error) {
+      toast("Update failed", { description: error.message });
+    } else {
+      toast("Profile updated", {
+        description: "Your personal information has been saved.",
+      });
     }
-  
-    const addProfileLink = () => {
-      setProfileLinks([...profileLinks, { platform: "", url: "" }])
-    }
-  
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Personal Information</CardTitle>
-          <CardDescription>Update your personal details and how we can contact you</CardDescription>
-        </CardHeader>
-  
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="first-name">Name</Label>
-              <Input id="name" placeholder="Enter your name" />
-            </div>
-          </div>
-  
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
-              <Input id="phone" placeholder="Enter your phone number" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="Enter your email" />
-            </div>
-          </div>
-  
+  };
+
+  return (
+    <Card className="w-full">
+      <Toaster />
+      <CardHeader>
+        <CardTitle>Personal Information</CardTitle>
+        <CardDescription>Update your personal details</CardDescription>
+      </CardHeader>
+
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="full-name">Full Name</Label>
+          <Input
+            id="full_name"
+            placeholder="Enter your full name"
+            value={formData.full_name}
+            onChange={onChangeHandler}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="location">Location (Optional)</Label>
-            <Input id="location" placeholder="City, Country" />
+            <Label htmlFor="phone">Phone Number</Label>
+            <Input
+              id="phone"
+              placeholder="Enter your phone number"
+              value={formData.phone}
+              onChange={onChangeHandler}
+            />
           </div>
-  
           <div className="space-y-2">
-            <Label>Profile Links</Label>
-            {profileLinks.map((link, index) => (
-              <div key={index} className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <Input
-                  placeholder="Platform (e.g. LinkedIn)"
-                  value={link.platform}
-                  onChange={(e) => handleProfileChange(index, "platform", e.target.value)}
-                />
-                <Input
-                  placeholder="URL (e.g. https://linkedin.com/in/yourname)"
-                  value={link.url}
-                  onChange={(e) => handleProfileChange(index, "url", e.target.value)}
-                />
-                <Button
-                    variant="destructive"
-                    size="icon"
-                    onClick={() => {
-                    const updated = [...profileLinks]
-                    updated.splice(index, 1)
-                    setProfileLinks(updated)
-                    }}
-                >
-                    ✕
-                </Button>
-              </div>
-            ))}
-            <Button variant="outline" onClick={addProfileLink}>
-              Add Another Link
-            </Button>
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={user?.email || ""}
+              placeholder="Enter your email"
+              disabled
+            />
           </div>
-        </CardContent>
-  
-        <CardFooter className="flex justify-end">
-          <Button>Save Changes</Button>
-        </CardFooter>
-      </Card>
-    )
-  }
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="location">Location (Optional)</Label>
+          <Input
+            id="location"
+            placeholder="City, Country"
+            value={formData.location}
+            onChange={onChangeHandler}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label>Profile Links</Label>
+          <div className="flex flex-col gap-1">
+            <Input
+              id="linkedin"
+              placeholder="Linkedin URL"
+              value={formData.linkedin}
+              onChange={onChangeHandler}
+            />
+            <Input
+              id="github"
+              placeholder="Github URL"
+              value={formData.github}
+              onChange={onChangeHandler}
+            />
+            <Input
+              id="portfolio"
+              placeholder="Portfolio URL"
+              value={formData.portfolio}
+              onChange={onChangeHandler}
+            />
+          </div>
+        </div>
+      </CardContent>
+
+      <CardFooter className="flex justify-end">
+        <Button onClick={saveChangesHandler}>Save Changes</Button>
+      </CardFooter>
+    </Card>
+  );
+}

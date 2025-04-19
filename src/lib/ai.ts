@@ -78,6 +78,11 @@ function parseBulletPoints(raw: string | undefined | null): string[] {
   if (!raw) return [];
   return raw
     .split('\n')
-    .map((line) => line.trim().replace(/^[–•\-\d\.]+\s*/, '')) // Remove leading bullets/numbers
+    .map((line) =>
+      line
+        .trim()
+        .replace(/^[–•\-\d\.]+\s*/, '')   // Remove leading bullets/numbers
+        .replace(/^"+|"+$/g, '')          // Remove surrounding double quotes
+    )
     .filter((line) => line.length > 0);
 }
