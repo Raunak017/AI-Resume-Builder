@@ -89,15 +89,22 @@ const ResumeDocument = ({ data }) => (
   <Document>
     <Page size="A4" style={styles.page}>
       {/* Header / Profile Section */}
-      <View style={styles.header}>
-        <Text style={styles.name}>{data.profile.name || "Your Name"}</Text>
-        <View style={styles.contactInfo}>
-          {data.profile.email && <Text style={styles.contactItem}>{data.profile.email}</Text>}
-          {data.profile.phone && <Text style={styles.contactItem}>{data.profile.phone}</Text>}
-          {data.profile.address && <Text style={styles.contactItem}>{data.profile.address}</Text>}
-        </View>
-        {data.profile.summary && <Text>{data.profile.summary}</Text>}
+      {/* Header / Profile Section */}
+    <View style={styles.header}>
+      <Text style={styles.name}>{data.profile.name || "Your Name"}</Text>
+
+      <View style={styles.contactInfo}>
+        {data.profile.email && <Text style={styles.contactItem}>{data.profile.email}</Text>}
+        {data.profile.phone && <Text style={styles.contactItem}>{data.profile.phone}</Text>}
+        {data.profile.address && <Text style={styles.contactItem}>{data.profile.address}</Text>}
+        {data.profile.linkedin && <Text style={styles.contactItem}>LinkedIn: {data.profile.linkedin}</Text>}
+        {data.profile.github && <Text style={styles.contactItem}>GitHub: {data.profile.github}</Text>}
+        {data.profile.portfolio && <Text style={styles.contactItem}>Portfolio: {data.profile.portfolio}</Text>}
       </View>
+
+      {data.profile.summary && <Text style={styles.summary}>{data.profile.summary}</Text>}
+    </View>
+
 
       {/* Education Section */}
       {data.education.some((edu) => edu.institution || edu.degree) && (
