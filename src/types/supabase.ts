@@ -42,7 +42,7 @@ export interface Database {
           gpa: string;
           startDate: string;
           endDate: string;
-          coursework: string;
+          coursework: string[];
           profileid: string;
           created_at: string;
         };

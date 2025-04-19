@@ -43,7 +43,7 @@ export default function EducationSection({ user }: { user: User | null }) {
   const handleChange = (
     index: number,
     field: keyof Omit<Education, 'id' | 'profileid' | 'created_at'>,
-    value: string
+    value: string | string[]
   ) => {
     const updated = [...educations];
     updated[index] = { ...updated[index], [field]: value };
@@ -61,7 +61,7 @@ export default function EducationSection({ user }: { user: User | null }) {
         gpa: '',
         startDate: '',
         endDate: '',
-        coursework: '',
+        coursework: [], // ← string[] to match Supabase
       },
     ]);
 
@@ -70,6 +70,13 @@ export default function EducationSection({ user }: { user: User | null }) {
     updated.splice(index, 1);
     setEducations(updated);
   };
+
+  function convertToDate(str: string): string | null {
+    if (!str) return null;
+    const [month, year] = str.split(" ");
+    if (!month || !year) return null;
+    return `${year}-${month.padStart(2, "0")}-01`;
+  }
 
   const saveEducations = async () => {
     if (!user) return;
@@ -90,8 +97,17 @@ export default function EducationSection({ user }: { user: User | null }) {
       }
     }
 
-    const toUpsert = educations.map((edu) => ({
+    const toUpsert = educations.map(({ id, ...edu }) => ({
+      ...(id ? { id } : {}), // only include id if it exists
       ...edu,
+      startDate: convertToDate(edu.startDate || ''),
+      endDate: convertToDate(edu.endDate || ''),
+      coursework: Array.isArray(edu.coursework)
+        ? edu.coursework
+        : (edu.coursework || '')
+            .split(',')
+            .map((c) => c.trim())
+            .filter(Boolean),
       profileid: user.id,
     }));
 
@@ -201,13 +217,24 @@ export default function EducationSection({ user }: { user: User | null }) {
           </div>
 
           <div className="space-y-2">
-            <Label>Relevant Coursework <span className="text-muted-foreground text-xs">(optional)</span></Label>
+            <Label>
+              Relevant Coursework <span className="text-muted-foreground text-xs">(optional)</span>
+            </Label>
             <Textarea
-              rows={3}
-              value={edu.coursework || ''}
-              onChange={(e) => handleChange(index, 'coursework', e.target.value)}
-              placeholder="List relevant classes separated by commas…"
-            />
+                rows={3}
+                value={(edu.coursework || []).join(', ')} // display array as comma-separated string
+                onChange={(e) =>
+                  handleChange(
+                    index,
+                    'coursework',
+                    e.target.value
+                      .split(',')
+                      .map((c) => c.trim())
+                      .filter(Boolean)
+                  )
+                }
+                placeholder="List relevant classes separated by commas…"
+              />
           </div>
         </div>
       ))}
