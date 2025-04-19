@@ -5,9 +5,17 @@ type FileData = {
   buffer: Buffer;
   name: string;
   mime: string;
+  parsedData?: any;
+  mutatedData?: any[];
+  templates?: {
+    versionIndex: number;
+    html: string;
+    createdAt: string;
+  }[];
 };
 
 const uploadedFiles = new Map<string, FileData>();
+export const uploadedFilesList = uploadedFiles;
 
 export async function POST(req: NextRequest) {
   try {
@@ -51,6 +59,8 @@ export async function GET(req: NextRequest) {
     const allFiles = Array.from(uploadedFiles.entries()).map(([id, file]) => ({
       id,
       name: file.name,
+      parsed: !!file.parsedData,
+      mutated: !!file.mutatedData?.length,
     }));
     return NextResponse.json(allFiles);
   }
