@@ -12,7 +12,7 @@ import { toast, Toaster } from 'sonner';
 
 import { Database } from '@/types/supabase';
 
-type Education = Partial<Database['public']['Tables']['education']['Row']>;
+type Education = Partial<Database['public']['Tables']['educations']['Row']>;
 
 export default function EducationSection({ user }: { user: User | null }) {
   const supabase = createClientComponentClient();
@@ -97,17 +97,27 @@ export default function EducationSection({ user }: { user: User | null }) {
       }
     }
 
+    const normalizeCoursework = (value: unknown): string[] => {
+      if (Array.isArray(value)) {
+        return value.map((c) => String(c).trim()).filter(Boolean);
+      }
+    
+      if (typeof value === "string") {
+        return value
+          .split(",")
+          .map((c) => c.trim())
+          .filter(Boolean);
+      }
+    
+      return [];
+    };
+
     const toUpsert = educations.map(({ id, ...edu }) => ({
       ...(id ? { id } : {}), // only include id if it exists
       ...edu,
       startDate: convertToDate(edu.startDate || ''),
       endDate: convertToDate(edu.endDate || ''),
-      coursework: Array.isArray(edu.coursework)
-        ? edu.coursework
-        : (edu.coursework || '')
-            .split(',')
-            .map((c) => c.trim())
-            .filter(Boolean),
+      coursework: normalizeCoursework(edu.coursework),
       profileid: user.id,
     }));
 

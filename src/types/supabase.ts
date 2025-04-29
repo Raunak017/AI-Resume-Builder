@@ -125,3 +125,44 @@ export interface Database {
     CompositeTypes: {};
   };
 }
+
+type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"]
+export type ResumeData = {
+  profile: {
+    name: ProfileRow["full_name"]
+    email: ProfileRow["email"]
+    phone: ProfileRow["phone"]
+    address: ProfileRow["location"]
+    linkedin: ProfileRow["linkedin"]
+    github: ProfileRow["github"]
+    portfolio: ProfileRow["portfolio"]
+  }
+  education: {
+    institution: string
+    degree: string
+    major: string
+    minor: string
+    gpa: string
+    from: string
+    to: string
+    coursework: string[]
+  }[]
+  experience: {
+    company: string
+    role: string
+    location: string
+    from: string
+    to: string
+    currently: boolean
+    summary: string
+    bullets: string[]
+  }[]
+  projects: {
+    title: string
+    technologies: string
+    description: string
+  }[]
+  skills: {
+    name: string
+  }[]
+}

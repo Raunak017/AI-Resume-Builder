@@ -82,6 +82,11 @@ const styles = StyleSheet.create({
     marginRight: 10,
     marginBottom: 5,
   },
+  rowBetween: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+  },
 })
 
 // Create Resume Document
@@ -89,8 +94,7 @@ const ResumeDocument = ({ data }) => (
   <Document>
     <Page size="A4" style={styles.page}>
       {/* Header / Profile Section */}
-      {/* Header / Profile Section */}
-    <View style={styles.header}>
+      <View style={styles.header}>
       <Text style={styles.name}>{data.profile.name || "Your Name"}</Text>
 
       <View style={styles.contactInfo}>
@@ -103,56 +107,93 @@ const ResumeDocument = ({ data }) => (
       </View>
 
       {data.profile.summary && <Text style={styles.summary}>{data.profile.summary}</Text>}
-    </View>
-
-
-      {/* Education Section */}
-      {data.education.some((edu) => edu.school || edu.degree) && (
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Education</Text>
-        {data.education.map((edu, index) =>
-          edu.school || edu.degree ? (
-            <View key={index} style={{ marginBottom: 8 }}>
-              <Text style={styles.entryTitle}>{edu.school}</Text>
-              <Text style={styles.entrySubtitle}>
-                {edu.degree}
-                {edu.major && ` in ${edu.major}`}
-              </Text>
-              {edu.minor && <Text style={styles.entrySubtitle}>Minor: {edu.minor}</Text>}
-              {(edu.startDate || edu.endDate) && (
-                <Text style={styles.entryDate}>
-                  {edu.startDate} - {edu.endDate}
-                </Text>
-              )}
-              {edu.gpa && <Text style={styles.entryDescription}>GPA: {edu.gpa}</Text>}
-              {edu.coursework?.length > 0 && (
-                <Text style={styles.entryDescription}>
-                  Relevant Coursework: {edu.coursework.join(", ")}
-                </Text>
-              )}
-            </View>
-          ) : null
-        )}
       </View>
-    )}
-
-
-      {/* Experience Section */}
-      {data.experience.some((exp) => exp.company || exp.position) && (
+        {/* Education Section */}
+        {data.education.some((edu) => edu.school || edu.degree) && (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Professional Experience</Text>
-          {data.experience.map((exp, index) =>
-            exp.company || exp.position ? (
-              <View key={index} style={{ marginBottom: 8 }}>
-                <Text style={styles.entryTitle}>{exp.company}</Text>
-                <Text style={styles.entrySubtitle}>{exp.position}</Text>
-                {exp.duration && <Text style={styles.entryDate}>{exp.duration}</Text>}
-                {exp.description && <Text style={styles.entryDescription}>{exp.description}</Text>}
+          <Text style={styles.sectionTitle}>Education</Text>
+          {data.education.map((edu, index) =>
+            edu.school || edu.degree ? (
+              <View key={index} style={{ marginBottom: 12 }}>
+                {/* Top Row: School & Dates aligned */}
+                <View style={styles.rowBetween}>
+                  <Text style={styles.entryTitle}>{edu.school}</Text>
+                  {(edu.startDate || edu.endDate) && (
+                    <Text style={styles.entryDate}>
+                      {edu.startDate} – {edu.endDate}
+                    </Text>
+                  )}
+                </View>
+
+                {/* Degree + Major */}
+                <Text style={styles.entrySubtitle}>
+                  {edu.degree}
+                  {edu.major && ` in ${edu.major}`}
+                </Text>
+
+                {/* Minor */}
+                {edu.minor && (
+                  <Text style={styles.entrySubtitle}>Minor: {edu.minor}</Text>
+                )}
+
+                {/* GPA aligned right */}
+                {edu.gpa && (
+                  <View style={styles.rowBetween}>
+                    <Text></Text> {/* spacer */}
+                    <Text style={styles.entryDescription}>GPA: {edu.gpa}</Text>
+                  </View>
+                )}
+
+                {/* Coursework */}
+                {edu.coursework?.length > 0 && (
+                  <Text style={styles.entryDescription}>
+                    Relevant Coursework: {edu.coursework.join(", ")}
+                  </Text>
+                )}
               </View>
-            ) : null,
+            ) : null
           )}
         </View>
       )}
+
+
+      {/* Experience Section */}
+      {data.experience.some((exp) => exp.company || exp.role) && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Professional Experience</Text>
+          {data.experience.map((exp, index) =>
+            exp.company || exp.role ? (
+              <View key={index} style={{ marginBottom: 12 }}>
+                <Text style={styles.entryTitle}>{exp.company}</Text>
+                <Text style={styles.entrySubtitle}>{exp.role}</Text>
+
+                <Text style={styles.entryDescription}>
+                  {exp.location}
+                </Text>
+
+                <Text style={styles.entryDate}>
+                  {exp.from} – {exp.currently ? "Present" : exp.to}
+                </Text>
+
+                {exp.summary && (
+                  <Text style={styles.entryDescription}>{exp.summary}</Text>
+                )}
+
+                {exp.bullets && exp.bullets.length > 0 && (
+                  <View style={{ marginTop: 4, marginLeft: 12 }}>
+                    {exp.bullets.map((bullet, i) => (
+                      <Text key={i} style={styles.bulletPoint}>
+                        • {bullet}
+                      </Text>
+                    ))}
+                  </View>
+                )}
+              </View>
+            ) : null
+          )}
+        </View>
+      )}
+
 
       {/* Projects Section */}
       {data.projects.some((proj) => proj.title) && (

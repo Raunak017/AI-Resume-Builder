@@ -10,44 +10,7 @@ import type { User } from "@supabase/auth-helpers-nextjs"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import type { Database } from "@/types/supabase"
 
-type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"]
-type ExperienceRow = Database["public"]["Tables"]["experiences"]["Row"]
-
-type ResumeData = {
-  profile: {
-    name: ProfileRow["full_name"]
-    email: ProfileRow["email"]
-    phone: ProfileRow["phone"]
-    address: ProfileRow["location"]
-    linkedin: ProfileRow["linkedin"]
-    github: ProfileRow["github"]
-    portfolio: ProfileRow["portfolio"]
-  }
-  education: {
-    institution: string
-    degree: string
-    year: string
-    description: string
-  }[]
-  experience: {
-    company: string
-    role: string
-    location: string
-    from: string
-    to: string
-    currently: boolean
-    summary: string
-    bullets: string[]
-  }[]
-  projects: {
-    title: string
-    technologies: string
-    description: string
-  }[]
-  skills: {
-    name: string
-  }[]
-}
+import type { ResumeData } from "@/types/supabase"
 
 const defaultResumeData: ResumeData = {
   profile: {
@@ -59,7 +22,7 @@ const defaultResumeData: ResumeData = {
     github: "",
     portfolio: "",
   },
-  education: [{ institution: "", degree: "", year: "", description: "" }],
+  education: [{ institution: "", degree: "", from: "", to: "", major: "", minor: "", gpa: "", coursework: [] }],
   experience: [{
     company: "",
     role: "",
@@ -82,48 +45,51 @@ export default function ResumeForm({ user }: { user: User | null }) {
   const supabase = createClientComponentClient<Database>()
 
   useEffect(() => {
-    if (!user) return
-  
+    if (!user) return;
+
     const fetchAllData = async () => {
-      setLoading(true)
-  
+      setLoading(true);
+
       try {
         // --- Fetch Profile ---
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("*")
           .eq("id", user.id)
-          .single()
-  
-        if (profileError) throw new Error("Could not fetch profile")
+          .single();
 
+        if (profileError) throw new Error("Could not fetch profile");
+
+        // --- Fetch Education ---
         const { data: educationData, error: educationError } = await supabase
           .from("educations")
           .select("*")
           .eq("profileid", user.id)
-          .single()
+          .single();
 
-        
+        if (educationError) throw new Error("Could not fetch education data");
+
         // --- Fetch Experience ---
         const { data: experiences, error: expError } = await supabase
           .from("experiences")
           .select("*")
-          .eq("profileid", user.id)
-  
-        if (expError) throw new Error("Could not fetch experience data")
-  
+          .eq("profileid", user.id);
+
+        if (expError) throw new Error("Could not fetch experience data");
+
         // --- Format Experience ---
-        const formattedExperience = experiences?.map((exp) => ({
-          company: exp.company,
-          role: exp.role,
-          location: exp.location,
-          from: formatToMonthYear(exp.from),
-          to: formatToMonthYear(exp.to),
-          currently: false,
-          summary: exp.summary || "",
-          bullets: exp.bullets || [],
-        })) || []
-  
+        const formattedExperience =
+          experiences?.map((exp) => ({
+            company: exp.company,
+            role: exp.role,
+            location: exp.location,
+            from: formatToMonthYear(exp.from),
+            to: formatToMonthYear(exp.to),
+            currently: false,
+            summary: exp.summary || "",
+            bullets: exp.bullets || [],
+          })) || [];
+
         // --- Set resumeData once ---
         setResumeData((prev) => ({
           ...prev,
@@ -140,17 +106,51 @@ export default function ResumeForm({ user }: { user: User | null }) {
             ? profileData.skills.split(",").map((skill: string) => ({ name: skill.trim() }))
             : [],
           experience: formattedExperience,
-        }))
+          education: educationData
+            ? [
+                {
+                  institution: educationData.school,
+                  degree: educationData.degree,
+                  from: formatToMonthYear(educationData.startDate),
+                  to: formatToMonthYear(educationData.endDate),
+                  major: educationData.major,
+                  minor: educationData.minor,
+                  gpa: educationData.gpa,
+                  coursework: educationData.coursework || [],
+                },
+              ]
+            : [],
+        }));
       } catch (error) {
-        console.error("Error loading resume data:", error)
-        toast.error("Failed to fetch resume data")
+        console.error("Error loading resume data:", error);
+        toast.error("Failed to fetch resume data");
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
-  
-    fetchAllData()
-  }, [user])
+    };
+
+    fetchAllData();
+  }, [user]);
+
+  useEffect(() => {
+    if (!resumeData.profile.name) return;
+
+    const generatePreview = async () => {
+      setLoading(true);
+      try {
+        const url = await generateResumePDF(resumeData);
+        setPreviewUrl(url);
+        toast.success("Preview Ready");
+      } catch (err) {
+        console.error("Preview generation failed", err);
+        toast.error("Error", { description: "Failed to generate preview." });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    generatePreview();
+  }, [resumeData]);
   
 
   const formatToMonthYear = (dateStr: string | null): string => {

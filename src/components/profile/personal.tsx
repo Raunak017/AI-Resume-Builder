@@ -22,8 +22,6 @@ export default function PersonalSection({ user }: { user: User | null }) {
   const supabase = createClientComponentClient();
 
   const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
   const [formData, setFormData] = useState({
     full_name: "",
     phone: "",
@@ -31,7 +29,39 @@ export default function PersonalSection({ user }: { user: User | null }) {
     linkedin: "",
     github: "",
     portfolio: "",
+    skills: "",
   });
+
+  useEffect(() => {
+    setMounted(true);
+    fetchPersonal();
+  }, [user]);
+  
+  const fetchPersonal = async () => {
+    if (!user) return; 
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+
+    if (error) {
+      toast.error("Failed to load personal information");
+      console.error("Supabase fetch error:", error);
+    } else {
+      setFormData({
+        full_name: data?.full_name || "",
+        phone: data?.phone || "",
+        location: data?.location || "",
+        linkedin: data?.linkedin || "",
+        github: data?.github || "",
+        portfolio: data?.portfolio || "",
+        skills: data?.skills || "",
+      });
+    }
+
+  };
+  
 
   const onChangeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -53,6 +83,7 @@ export default function PersonalSection({ user }: { user: User | null }) {
         linkedin: formData.linkedin,
         github: formData.github,
         portfolio: formData.portfolio,
+        skills: formData.skills,
       })
       .eq("id", user.id);
 
@@ -114,6 +145,16 @@ export default function PersonalSection({ user }: { user: User | null }) {
             id="location"
             placeholder="City, Country"
             value={formData.location}
+            onChange={onChangeHandler}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="skills">Skills </Label>
+          <Input
+            id="skills"
+            placeholder="JavaScript, React, Node.js"
+            value={formData.skills}
             onChange={onChangeHandler}
           />
         </div>
