@@ -1,3 +1,5 @@
+Here's the link to our Devpost hackathon submission : [link](https://devpost.com/software/ai-resume-builder-128t3o)
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
